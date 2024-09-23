@@ -31,7 +31,6 @@ central_column_index = ceil(nPixels/2);
 system_matrix(:, central_column_index) = pointspread;
 
 % Filling in the system matrix
-
 for col_index = 1:nPixels
     if col_index <= central_column_index 
         col_shift = central_column_index - col_index; 
@@ -157,40 +156,18 @@ for i = (1:length(frequencies))
 
     absWeights1 = abs(weights1);
     absWeights2 = abs(weights2);
+    [~,maxIndex1] = sort(absWeights1,'descend');
+    [~,maxIndex2] = sort(absWeights2,'descend');
+    if (~any(maxIndex2(1) == maxIndex1(1:2)))
+        error('Inconsistent results for the two matched frequency ifft components');
+    end
+    if (~any(maxIndex2(2) == maxIndex1(1:2)))
+        error('Inconsistent results for the two matched frequency ifft components');
+    end
 
-    % Finding largest and second largest weights
-    max_weight1 = max(absWeights1); 
-    max_index_weight1 = find(absWeights1 == max_weight1);
-    % Removing the max value so that we can find the second largest value
-    absWeights1(max_index_weight1) = [];
-    second_max_weight1 = max(absWeights1);
-    second_max_index_weight1 = find(absWeights1 == second_max_weight1);
-    list1{end + 1} = {max(max_index_weight1); max(second_max_index_weight1)};
-    % Put max() to account for the weight being the same at two indices
-    % (choose the larger one)
-
-    max_weight2 = max(absWeights2); 
-    max_index_weight2 = find(absWeights2 == max_weight2);
-    % Removing the max value so that we can find the second largest value
-    absWeights2(max_index_weight2) = [];
-    second_max_weight2 = max(absWeights2);
-    second_max_index_weight2 = find(absWeights2 == second_max_weight2);
-    list2{end + 1} = {max(max_index_weight2); max(second_max_index_weight2)};
-    % Put max() to account for the weight being the same at two indices
-    % (choose the larger one)
-
-    % Then reorder the E_ifft matrix
-    % Want to move the E_ifft column to the index of the weight
-    % Using the weights1 list
-    E_ifft_reordered(:,1+frequency) = E_ifft(:, list2{frequency}{1});
-    E_ifft_reordered(:,nPixels-frequency+1) = E_ifft(:, (list2{frequency}{1} + 1));
+    E_ifft_reordered(:,1+frequency) = E_ifft(:, maxIndex1(1));
+    E_ifft_reordered(:,nPixels-frequency+1) = E_ifft(:, maxIndex1(2));
 end
-
-% absWeights1 = sort(abs(weights1),'descend');
-% absWeights2 = sort(abs(weights2),'descend');
-
-% Using list 2 to reorder the MATLAB ifft matrix - should correspond to
-% increasing spatial frequency with increasing index.
 
 D_direct = inv(E_ifft) * system_matrix * E_ifft;
 retinal_image_fft_2 = E_ifft * (D_direct * (inv(E_ifft) * display_image_sine));
@@ -207,8 +184,8 @@ title('Display Image Intensity (Input)');
 % Plotting retinal image with harmonic input, using E_ifft
 subplot(2, 1, 2);
 hold on
-plot(x, retinal_image);
-plot(x, retinal_image_fft_2); 
+plot(x, retinal_image,'r','LineWidth',4);
+plot(x, abs(retinal_image_fft_2),'g','LineWidth',2);
 xlabel('Retinal Position Unit');
 ylabel('Intensity');
 title('Intensity of Retinal Image (Output)');
@@ -219,7 +196,7 @@ hold off
 
 figure(4);
 
-fs = 1/0.1;
+fs = 1/0.01;
 % 0.1 seconds between each sample (sampling period), so the signal is sampled 10 times per
 % second
 N = length(display_image_sine);
@@ -230,4 +207,4 @@ Y = E_ifft_reordered * (pointspread)';
 % Fourier transform of the pointspread
 
 % plot(Freq(1:round(N/2)), Y(1:round(N/2)));
-plot(Freq, Y)
+plot(Freq, abs(Y))
