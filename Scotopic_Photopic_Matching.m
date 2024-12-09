@@ -132,4 +132,6 @@ hold on
 h1 = plot(wavelength, photopicMatchingKnobs, 'LineWidth', 4, 'LineStyle', '-', 'Color', 'r');
 h2 = plot(wavelength, photopicMatchingSystemMatrix, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'b');
 legend('Photopic Matching System Matrix Using fmincon', '', '', 'Photopic Matching System Matrix');
+xlabel('Wavelength (nm)');
+ylabel('Relative Power');
 hold off
