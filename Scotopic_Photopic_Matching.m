@@ -52,8 +52,7 @@ M_cone = rand(1, length(wavelength));
 S_cone = rand(1, length(wavelength));
 
 coneSensitivity = [L_cone', M_cone', S_cone'];
-
-% Same as the system matrix of the cone photopigment absoprtion experiment
+% Synonym to "the system matrix of the cone photopigment absoprtion experiment"
 
 rng(15); % Set a different random seed 
 primaryDist1 = rand(1, length(wavelength)) * 1/4; % Random power values for the primary light spectral distribution
@@ -90,16 +89,47 @@ for i = 1:length(wavelength) % Looping through wavelengths
     unitTestLight =  zeros(length(wavelength), 1); 
     unitTestLight(i) = 1; % Set intensity of test light at the current wavelength to 1
     excitations = coneSensitivity' * unitTestLight;
-    Q = coneSensitivity' * primaryDist;
-    Q_inv = inv(Q);
-    column = Q_inv * excitations;
+    Q_inv = coneSensitivity' * primaryDist;
+    Q = inv(Q_inv);
+    column = Q * excitations;
     photopicMatchingSystemMatrix(:, i) = column;
+    % We found a linear transformation of the cone spectral sensitivities
 end
 
-%%% Plotting photopic matching system matrix %%%
+% Now want to simulate the subject turning knobs %
+% The knob settings are within a linear transformation of the cone
+% spectral sensitivities
+photopicMatchingKnobs = zeros(3, length(wavelength));
+
+% Options for fmincon
+options = optimoptions('fmincon', 'Display', 'off', 'Algorithm', 'interior-point');
+
+for i = 1:length(wavelength) % Looping through wavelengths
+
+    unitTestLight =  zeros(length(wavelength), 1); 
+    unitTestLight(i) = 1; % Set intensity of test light at the current wavelength to 1
+    excitations = coneSensitivity' * unitTestLight;
+
+    % Objective function: minimize the difference between the two sides of
+    % the equation
+    objective = @(knobs) norm(excitations - (coneSensitivity' * (primaryDist * knobs)))^2;
+
+    % Initial guess for the knobs
+    initialKnobs = zeros(3, 1);
+
+    % Use fmincon to find knobs for the current wavelength
+    % No lower or upper bounds here - add these?
+    knobs = fmincon(objective, initialKnobs, [], [], [], [], [], [], [], []);
+
+    photopicMatchingKnobs(:, i) = knobs;
+    
+end
+
+%%% Plotting photopic matching system matrix in two ways %%%
+% They are the same! %
 figure(5);
 hold on
-h1 = plot(wavelength, coneSensitivity, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'b');
-h2 = plot(wavelength, photopicMatchingSystemMatrix, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'r');
-legend('Cone Spectral Sensitivity', '', '', 'Photopic Matching System Matrix');
+h1 = plot(wavelength, photopicMatchingKnobs, 'LineWidth', 4, 'LineStyle', '-', 'Color', 'r');
+h2 = plot(wavelength, photopicMatchingSystemMatrix, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'b');
+legend('Photopic Matching System Matrix Using fmincon', '', '', 'Photopic Matching System Matrix');
 hold off
