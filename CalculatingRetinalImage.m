@@ -165,30 +165,6 @@ for i = (1:length(frequencies))
         error('Inconsistent results for the two matched frequency ifft components');
     end
 
-    % % Finding largest and second largest weights
-    % max_weight1 = max(absWeights1); 
-    % max_index_weight1 = find(absWeights1 == max_weight1);
-    % % Removing the max value so that we can find the second largest value
-    % absWeights1(max_index_weight1) = [];
-    % second_max_weight1 = max(absWeights1);
-    % second_max_index_weight1 = find(absWeights1 == second_max_weight1);
-    % list1{end + 1} = {max(max_index_weight1); max(second_max_index_weight1)};
-    % % Put max() to account for the weight being the same at two indices
-    % % (choose the larger one)
-    % 
-    % max_weight2 = max(absWeights2); 
-    % max_index_weight2 = find(absWeights2 == max_weight2);
-    % % Removing the max value so that we can find the second largest value
-    % absWeights2(max_index_weight2) = [];
-    % second_max_weight2 = max(absWeights2);
-    % second_max_index_weight2 = find(absWeights2 == second_max_weight2);
-    % list2{end + 1} = {max(max_index_weight2); max(second_max_index_weight2)};
-    % % Put max() to account for the weight being the same at two indices
-    % % (choose the larger one)
-
-    % Then reorder the E_ifft matrix
-    % Want to move the E_ifft column to the index of the weight
-    % Using the weights1 list
     E_ifft_reordered(:,1+frequency) = E_ifft(:, maxIndex1(1));
     E_ifft_reordered(:,nPixels-frequency+1) = E_ifft(:, maxIndex1(2));
 end
